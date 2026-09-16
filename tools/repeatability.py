@@ -21,14 +21,14 @@ def main(paths: list[str]) -> int:
             continue
         r = rectify(image)
         if r is None:
-            print(f"{path}: board not found")
+            print(f"{path}: no usable board view (not found, too oblique, or partly hidden)")
             continue
-        rms.append(r.reproj_rms_px)
+        rms.append(r.reproj_rms_mm)
     if len(rms) < 2:
         print(f"only {len(rms)} usable captures, cannot report spread")
         return 1
     print(f"usable {len(rms)}/{len(paths)}")
-    print(f"reprojection rms px: mean {statistics.mean(rms):.3f} max {max(rms):.3f}")
+    print(f"reprojection rms mm: mean {statistics.mean(rms):.3f} max {max(rms):.3f}")
     return 0
 
 

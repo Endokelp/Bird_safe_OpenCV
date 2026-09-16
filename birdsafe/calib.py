@@ -9,9 +9,10 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from tools.charuco_sheet import birdsafe_board
+from tools.charuco_sheet import SQUARES_X, birdsafe_board
 
 MIN_CORNERS = 6
+CORNERS_PER_ROW = SQUARES_X - 1
 # ponytail: 8000 px is 4 m at 0.5 mm/px; a bigger footprint means a view too oblique to
 # measure. Return a reason instead of None when the capture policy needs to tell the user
 # which check failed.
@@ -22,7 +23,10 @@ MAX_SIDE_PX = 8000
 class Rectified:
     image: np.ndarray
     mm_per_px: float
-    reproj_rms_px: float
+    # Where the board's top-left corner sits in `image`. Every capture of one pane shares the
+    # board plane, so subtracting this puts all captures in one frame without registration.
+    board_origin_mm: tuple[float, float]
+    reproj_rms_mm: float
     corners_found: int
 
 
@@ -37,18 +41,24 @@ def rectify(image: np.ndarray, mm_per_px: float = 0.5) -> Rectified | None:
     corners, ids, _marker_corners, _marker_ids = cv2.aruco.CharucoDetector(board).detectBoard(image)
     if corners is None or ids is None or len(corners) < MIN_CORNERS:
         return None
+    ids = ids.flatten()
+    # Corners from a single board row or column are collinear, and a homography fitted to them
+    # stretches the unseen axis arbitrarily.
+    if len(set(ids // CORNERS_PER_ROW)) < 2 or len(set(ids % CORNERS_PER_ROW)) < 2:
+        return None
 
     # Board corner (i, j) sits at a known millimetre offset, which fixes the output scale.
-    obj = board.getChessboardCorners()[ids.flatten()][:, :2] * 1000.0 / mm_per_px
+    obj = board.getChessboardCorners()[ids][:, :2] * 1000.0 / mm_per_px
     src = corners.reshape(-1, 2).astype(np.float32)
     dst = obj.astype(np.float32)
 
-    h_matrix, _inliers = cv2.findHomography(src, dst, cv2.RANSAC, 3.0)
+    h_matrix, inliers = cv2.findHomography(src, dst, cv2.RANSAC, 3.0)
     if h_matrix is None:
         return None
 
-    projected = cv2.perspectiveTransform(src.reshape(-1, 1, 2), h_matrix).reshape(-1, 2)
-    rms = float(np.sqrt(np.mean(np.sum((projected - dst) ** 2, axis=1))))
+    fit = inliers.ravel().astype(bool)
+    projected = cv2.perspectiveTransform(src[fit].reshape(-1, 1, 2), h_matrix).reshape(-1, 2)
+    rms_px = float(np.sqrt(np.mean(np.sum((projected - dst[fit]) ** 2, axis=1))))
 
     img_h, img_w = image.shape[:2]
     frame_corners = np.float32([[0, 0], [img_w, 0], [img_w, img_h], [0, img_h]])
@@ -81,6 +91,7 @@ def rectify(image: np.ndarray, mm_per_px: float = 0.5) -> Rectified | None:
     return Rectified(
         image=warped,
         mm_per_px=mm_per_px,
-        reproj_rms_px=rms,
+        board_origin_mm=(float(-min_xy[0]) * mm_per_px, float(-min_xy[1]) * mm_per_px),
+        reproj_rms_mm=rms_px * mm_per_px,
         corners_found=int(len(corners)),
     )
