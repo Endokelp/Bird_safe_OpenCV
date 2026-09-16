@@ -63,6 +63,8 @@ def check_coverage(pane, markers, unknown, mm_per_px, rule_mm=RULE_MM) -> Covera
             "Capture closer or rectify to a finer scale."
         )
 
+    # OpenCV masks arrive as 0/255 uint8; bitwise logic and sums below assume booleans.
+    pane, markers, unknown = (np.asarray(m, dtype=bool) for m in (pane, markers, unknown))
     pane_u8 = pane.astype(np.uint8)
     observed_empty = (pane & ~markers & ~unknown).astype(np.uint8)
     # Unknown is never counted as covered: a marker detected under glare cannot rule out a gap.

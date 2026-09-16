@@ -73,6 +73,18 @@ def test_unknown_area_is_never_counted_as_a_gap():
     assert r.possible.any()
 
 
+def test_opencv_style_uint8_masks_give_the_same_answer_as_booleans():
+    p = make_pane(300, 300, 40, 6, 0.5, omit=((3, 3),),
+                  unknown_boxes_mm=((0.0, 0.0, 150.0, 300.0),))
+    as_u8 = [m.astype(np.uint8) * 255 for m in (p.pane, p.markers, p.unknown)]
+    r = check_coverage(*as_u8, p.mm_per_px)
+    expected = _check(p)
+    assert r.unknown_fraction == pytest.approx(expected.unknown_fraction)
+    assert r.largest_gap_mm == expected.largest_gap_mm
+    assert r.confirmed.dtype == bool
+    assert (r.confirmed == expected.confirmed).all() and (r.possible == expected.possible).all()
+
+
 def test_a_marker_seen_under_glare_does_not_hide_a_possible_violation():
     p = make_pane(300, 300, 40, 6, 0.5, omit=((3, 3),),
                   unknown_boxes_mm=((110.0, 110.0, 60.0, 60.0),))
