@@ -1,0 +1,21 @@
+[project]
+name = "birdsafe"
+version = "0.1.0"
+description = "Installation coverage checker for visible bird-safe window markings"
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python==5.0.0.93",
+    "numpy==2.3.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2", "ruff==0.14.0"]
+
+[tool.setuptools.packages.find]
+include = ["birdsafe*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

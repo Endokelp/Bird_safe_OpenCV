@@ -1,0 +1,19 @@
+# Competition strategy and research. Never publish.
+WIN-AND-PLACE-CLAUDE.txt
+CONTEST-DOSSIER.md
+MASTER-BRIEF.md
+PHASE-STATE.md
+
+# Captures are large and may show private property. Kept out of the repo.
+captures/
+data/raw/
+
+# Local agent tool state.
+.agents/
+
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
