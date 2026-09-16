@@ -194,11 +194,10 @@ against that revision. Agreement between reviewers is not proof; the gate is the
 Mechanical, in CI, failing the build:
 
 - No em dash anywhere in tracked files.
-- No banned vocabulary: delve, leverage, seamless, revolutionize, game-changing, cutting-edge,
-  unlock, elevate, robust solution, in today's fast-paced world.
-- No "not just X, but Y" construction.
+- No banned vocabulary: delve, leverage, seamless, revolutionize, game-changing, cutting-edge, unlock, elevate, robust solution, in today's fast-paced world. (sloplint: allow)
+- No "not just X, but Y" construction. (sloplint: allow)
 - No `console.log` or bare `print` debugging in committed source.
-- No `TODO` without an owner and a reason.
+- No `TODO` without an owner and a reason. (sloplint: allow)
 - Strategy documents absent from `git ls-files`.
 
 Judgement, at each review:

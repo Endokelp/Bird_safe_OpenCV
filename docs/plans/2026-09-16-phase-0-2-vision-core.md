@@ -15,7 +15,7 @@
 - Every public function that returns a physical quantity returns millimetres. Pixels never leave a module.
 - No em dash in any tracked file. No banned vocabulary (see `tools/sloplint.py`). CI fails on either.
 - `WIN-AND-PLACE-CLAUDE.txt`, `CONTEST-DOSSIER.md`, `MASTER-BRIEF.md` are gitignored before the first commit and must never appear in `git ls-files`.
-- Comments explain a non-obvious reason. No narrated steps, no banner comments, no `TODO` without an owner and a reason.
+- Comments explain a non-obvious reason. No narrated steps, no banner comments, no `TODO` without an owner and a reason. (sloplint: allow)
 - No number goes in any document without an observed run behind it.
 - Conventional commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`). No AI attribution in any commit, ever.
 
@@ -189,9 +189,9 @@ ALLOW_MARKER = "sloplint: allow"
 EM_DASH = chr(0x2014)
 
 BANNED = [
-    "delve", "leverage", "seamless", "revolutionize", "revolutionise",
-    "game-changing", "cutting-edge", "unlock the power", "elevate your",
-    "robust solution", "in today's fast-paced world", "harness the power",
+    "delve", "leverage", "seamless", "revolutionize", "revolutionise",  # sloplint: allow
+    "game-changing", "cutting-edge", "unlock the power", "elevate your",  # sloplint: allow
+    "robust solution", "in today's fast-paced world", "harness the power",  # sloplint: allow
 ]
 
 # The comma is required so that an ordinary sentence using "not just" for real emphasis
@@ -199,7 +199,7 @@ BANNED = [
 NOT_JUST = re.compile(r"\bnot just\b[^.;!?\n]{1,80},\s*but\b", re.IGNORECASE)
 
 # An owner in parentheses and a reason after the colon. A bare marker rots.
-TODO_OK = re.compile(r"TODO\([^)]+\):\s*\S")
+TODO_OK = re.compile(r"TODO\([^)]+\):\s*\S")  # sloplint: allow
 TODO_ANY = re.compile(r"\bTODO\b")
 
 

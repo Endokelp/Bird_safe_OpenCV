@@ -98,12 +98,10 @@ the next fix in `PHASE-STATE.md`.
 
 - Write plain, specific language. No hype, invented novelty, invented impact, fake confidence
   percentages, or "AI-powered" as a substitute for explaining the vision step.
-- Avoid em dashes, decorative emoji, canned openings, and phrases such as "delve," "leverage,"
-  "seamless," "revolutionize," "game-changing," and "in today's fast-paced world." Do not use
-  the formula "not just X, but Y." Show the observed behavior and number instead.
-- Comments explain a non-obvious reason. No narrated steps, dead code, banner comments, or
-  TODO without an owner and a reason. Names should describe the pane, marker, gap, calibration,
-  or capture they represent.
+- Avoid em dashes, decorative emoji, canned openings, and phrases such as "delve," "leverage," "seamless," "revolutionize," "game-changing," and "in today's fast-paced world." (sloplint: allow)
+- Do not use the formula "not just X, but Y." Show the observed behavior and number instead. (sloplint: allow)
+- Comments explain a non-obvious reason. No narrated steps, dead code, banner comments, or TODO without an owner and a reason. (sloplint: allow)
+  Names should describe the pane, marker, gap, calibration, or capture they represent.
 - Design one clear scan-to-result path with visible uncertainty and a repair location. Test it
   on an actual phone, including poor light, glare, a failed calibration, keyboard access where
   applicable, and narrow screens. A screenshot alone is not a usability test.
