@@ -116,14 +116,23 @@ which is a violation. Dilating the survivors back by the same element draws the 
 Two masks are produced, and both are reported:
 
 - Confirmed violation: the square is all-empty and fully observed, `E AND NOT U`.
-- Possible violation: the square is all-empty but overlaps unknown area. Not claimed as a failure.
-  It becomes a recapture request.
+- Possible violation: the square fits in `pane AND (NOT M OR U)` but not in `E AND NOT U`. A marker
+  detected inside unknown area does not count as coverage. Not claimed as a failure. It becomes a
+  recapture request.
 
-Headline number: the distance transform of `E`, computed with a zero border so the pane edge bounds
-it, gives the distance from every empty pixel to the nearest marking or pane edge. Twice its maximum
-is the diameter of the largest untreated circle lying inside the pane, reported in inches next to
-the 2 inch threshold. Without the border the measurement runs off the pane at the corners and
-overstates the gap, and a fully untreated pane returns infinity.
+The square side in pixels is the smallest whole number strictly greater than `50.8 mm / mm_per_px`,
+so a gap of exactly 2 inches passes.
+
+Headline number: the side of the largest all-empty axis-aligned square in `E AND NOT U`, reported in
+inches next to the 2 inch threshold. It is the same shape the verdict tests, so the number exceeds
+2 inches exactly when a confirmed violation exists, and unknown area never counts as a gap. A
+chessboard distance transform with a zero border gives it to within one pixel, and one erosion
+settles that pixel. An earlier draft used the largest empty circle; on a compliant 45 mm dot grid
+that read 57.4 mm while the square test passed, so the number contradicted the verdict.
+
+Round dots let a square slip diagonally between them, so on a regular grid of 6 mm dots the check
+flags a centre spacing of 56 mm even though the horizontal edge-to-edge gap is about 49.5 mm. This
+follows from reading the rule as "no empty 2 inch square", and the report states that reading.
 
 The check is axis-aligned because the rule is stated in horizontal and vertical terms. A region that
 is wide only on the diagonal is not reported, and that interpretation is stated in the report rather
@@ -132,7 +141,7 @@ than left implicit.
 Connected components of the confirmed violation mask become repair targets, each with a centroid in
 millimetres from a named pane corner, which is what the overlay draws and what the report lists.
 
-The whole check is one erosion, one distance transform, and one connected-components call. It is
+The whole check is three erosions, one distance transform, and one connected-components call. It is
 exact rather than learned, it runs in milliseconds, and its failure modes are all upstream in
 detection rather than hidden inside a model.
 
