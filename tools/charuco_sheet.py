@@ -46,7 +46,8 @@ def sheet_pdf() -> bytes:
     text = (
         f"{SQUARES_X} x {SQUARES_Y} squares, {SQUARE_MM:.0f} mm squares, "
         f"{MARKER_MM:.0f} mm markers, DICT_4X4_50. "
-        "Print at Actual size \\(100%\\). Measure one square with a ruler before use."
+        "Print at Actual size \\(100%\\). "
+        f"Board width must measure {SQUARES_X * SQUARE_MM:.0f} mm."
     )
 
     gap_pt = 16.0

@@ -71,7 +71,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 6 0 obj
-<< /Length 242 >>
+<< /Length 231 >>
 stream
 q
 595.275591 0 0 425.196850 98.362205 110.401575 cm
@@ -80,7 +80,7 @@ Q
 BT
 /F1 10.00 Tf
 98.362205 84.401575 Td
-(7 x 5 squares, 30 mm squares, 22 mm markers, DICT_4X4_50. Print at Actual size \(100%\). Measure one square with a ruler before use.) Tj
+(7 x 5 squares, 30 mm squares, 22 mm markers, DICT_4X4_50. Print at Actual size \(100%\). Board width must measure 210 mm.) Tj
 ET
 
 endstream
@@ -97,5 +97,5 @@ xref
 trailer
 << /Size 7 /Root 1 0 R >>
 startxref
-47103
+47092
 %%EOF
