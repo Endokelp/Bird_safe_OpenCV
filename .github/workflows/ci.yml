@@ -1,0 +1,20 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: python tools/sloplint.py
+      - run: |
+          if git ls-files | grep -E 'WIN-AND-PLACE|CONTEST-DOSSIER|MASTER-BRIEF'; then
+            echo "Strategy document is tracked. Remove it from the index."
+            exit 1
+          fi
+      - run: python -m pytest -v
+      - run: python -c "import cv2; assert cv2.__version__.startswith('5.'), cv2.__version__"
