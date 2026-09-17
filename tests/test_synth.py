@@ -1,5 +1,8 @@
+import cv2
+import numpy as np
+
 from birdsafe.coverage import RULE_MM
-from birdsafe.synth import grid_positions, make_pane
+from birdsafe.synth import grid_positions, make_pane, render_pane
 
 
 def test_full_grid_has_no_planted_gaps():
@@ -39,3 +42,48 @@ def test_unknown_box_lands_in_millimetre_coordinates():
     assert p.unknown[0, 0]
     assert not p.unknown[-1, -1]
     assert abs(p.unknown.sum() * 0.5 * 0.5 - 2500.0) < 50.0
+
+
+def test_render_matches_the_marker_mask_shape_and_is_bgr():
+    p = make_pane(300, 300, 40, 6, 0.5)
+    image = render_pane(p)
+    assert image.shape == (p.markers.shape[0], p.markers.shape[1], 3)
+    assert image.dtype == np.uint8
+
+
+def test_dark_dots_are_darker_than_the_background():
+    p = make_pane(300, 300, 40, 6, 0.5)
+    image = render_pane(p, dark_on_light=True, texture_std=0.0)
+    gray = image.mean(axis=2)
+    assert gray[p.markers].mean() < gray[~p.markers].mean()
+
+
+def test_light_dots_are_brighter_than_the_background():
+    p = make_pane(300, 300, 40, 6, 0.5)
+    image = render_pane(p, dark_on_light=False, texture_std=0.0)
+    gray = image.mean(axis=2)
+    assert gray[p.markers].mean() > gray[~p.markers].mean()
+
+
+def test_glare_box_is_saturated_and_hides_dots():
+    p = make_pane(300, 300, 40, 6, 0.5)
+    image = render_pane(p, texture_std=0.0, glare_boxes_mm=((20.0, 20.0, 100.0, 100.0),))
+    x0, y0 = round(20.0 / p.mm_per_px), round(20.0 / p.mm_per_px)
+    x1, y1 = round(120.0 / p.mm_per_px), round(120.0 / p.mm_per_px)
+    patch = image[y0 + 10:y1 - 10, x0 + 10:x1 - 10]
+    assert patch.min() == 255
+    assert patch.max() == 255
+
+
+def test_blur_lowers_high_frequency_energy():
+    p = make_pane(300, 300, 40, 6, 0.5)
+    sharp = render_pane(p, texture_std=8.0, blur_sigma_px=0.0)
+    blurry = render_pane(p, texture_std=8.0, blur_sigma_px=8.0)
+    # Laplacian energy is the same measure quality.py uses to decide a region cannot resolve a dot.
+    assert _laplacian_energy(blurry) < 0.01 * _laplacian_energy(sharp)
+
+
+def _laplacian_energy(image):
+    gray = image.mean(axis=2)
+    lap = cv2.Laplacian(gray, cv2.CV_64F, ksize=3)
+    return float((lap * lap).mean())

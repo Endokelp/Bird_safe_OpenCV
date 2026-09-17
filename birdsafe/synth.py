@@ -60,3 +60,33 @@ def make_pane(width_mm, height_mm, spacing_mm, dot_mm, mm_per_px,
         mm_per_px=mm_per_px,
         planted_gap_centers_mm=tuple(gaps),
     )
+
+
+def render_pane(
+    pane: SyntheticPane,
+    *,
+    dark_on_light: bool = True,
+    light: int = 220,
+    dark: int = 40,
+    texture_std: float = 8.0,
+    glare_boxes_mm: tuple = (),
+    blur_sigma_px: float = 0.0,
+    rng_seed: int = 0,
+) -> np.ndarray:
+    height, width = pane.markers.shape
+    background, foreground = (light, dark) if dark_on_light else (dark, light)
+    gray = np.full((height, width), background, np.uint8)
+    if texture_std > 0:
+        noise = np.random.default_rng(rng_seed).normal(0.0, texture_std, (height, width))
+        gray = np.clip(gray.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    gray[pane.markers] = foreground
+    for x_mm, y_mm, box_w_mm, box_h_mm in glare_boxes_mm:
+        x0 = max(0, round(x_mm / pane.mm_per_px))
+        y0 = max(0, round(y_mm / pane.mm_per_px))
+        x1 = min(width, round((x_mm + box_w_mm) / pane.mm_per_px))
+        y1 = min(height, round((y_mm + box_h_mm) / pane.mm_per_px))
+        gray[y0:y1, x0:x1] = 255
+    if blur_sigma_px > 0:
+        ksize = max(3, int(round(blur_sigma_px * 6)) | 1)
+        gray = cv2.GaussianBlur(gray, (ksize, ksize), blur_sigma_px)
+    return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
