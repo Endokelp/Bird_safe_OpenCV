@@ -8,27 +8,41 @@ import statistics
 import sys
 
 import cv2
+import numpy as np
 
 from birdsafe.calib import rectify
+from birdsafe.coverage import check_coverage
+from birdsafe.markers import detect_markers
+from birdsafe.quality import unknown_regions
 
 
 def main(paths: list[str]) -> int:
     rms = []
+    gaps = []
     for path in paths:
         image = cv2.imread(path)
         if image is None:
             print(f"{path}: unreadable")
             continue
-        r = rectify(image)
-        if r is None:
+        rectified = rectify(image)
+        if rectified is None:
             print(f"{path}: no usable board view (not found, too oblique, or partly hidden)")
             continue
-        rms.append(r.reproj_rms_mm)
+        rms.append(rectified.reproj_rms_mm)
+        markers = detect_markers(rectified.image, rectified.mm_per_px)
+        quality = unknown_regions(rectified.image, rectified.mm_per_px)
+        # ponytail: no pane quadrilateral until Phase 6. Repeatability measures the
+        # full rectified frame, which is enough to compare captures of one taped sheet.
+        pane = np.ones(markers.mask.shape, bool)
+        coverage = check_coverage(pane, markers.mask, quality.unknown, rectified.mm_per_px)
+        gaps.append(coverage.largest_gap_mm)
     if len(rms) < 2:
         print(f"only {len(rms)} usable captures, cannot report spread")
         return 1
     print(f"usable {len(rms)}/{len(paths)}")
     print(f"reprojection rms mm: mean {statistics.mean(rms):.3f} max {max(rms):.3f}")
+    if len(gaps) >= 2:
+        print(f"largest gap mm: mean {statistics.mean(gaps):.3f} max {max(gaps):.3f}")
     return 0
 
 
