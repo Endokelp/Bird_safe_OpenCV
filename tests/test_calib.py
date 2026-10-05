@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import pytest
 
-from birdsafe.calib import CORNERS_PER_ROW, rectify
+from birdsafe.calib import CORNERS_PER_ROW, Rectified, Rejected, rectify
 from tools.charuco_sheet import SQUARE_MM, SQUARES_X, SQUARES_Y, birdsafe_board
 
 MM_PER_PX = 0.5
@@ -16,6 +16,7 @@ DOT_FROM_BOARD_MM = (230.0, 170.0)
 
 VIEW_A = [[60, 20], [-20, 0], [0, 0], [0, -30]]
 VIEW_B = [[0, 40], [-50, 10], [-10, 0], [30, -10]]
+SQUARE_ON = [[0, 0], [0, 0], [0, 0], [0, 0]]
 
 
 def _warped_scene(view=VIEW_A, square_rows_visible=SQUARES_Y):
@@ -45,14 +46,14 @@ def _red_dot_mm(r):
 
 def test_rectify_finds_corners_and_reports_low_reprojection_error():
     r = rectify(_warped_scene())
-    assert r is not None
+    assert isinstance(r, Rectified)
     assert r.corners_found >= 6
     assert r.reproj_rms_mm < 1.0
 
 
 def test_rectified_board_squares_measure_the_physical_square_size():
     r = rectify(_warped_scene(), mm_per_px=MM_PER_PX)
-    assert r is not None
+    assert isinstance(r, Rectified)
 
     corners, ids, _marker_corners, _marker_ids = cv2.aruco.CharucoDetector(
         birdsafe_board()
@@ -73,7 +74,7 @@ def test_rectified_board_squares_measure_the_physical_square_size():
 @pytest.mark.parametrize("view", [VIEW_A, VIEW_B])
 def test_a_point_on_the_glass_lands_at_the_same_board_relative_position_in_every_view(view):
     r = rectify(_warped_scene(view))
-    assert r is not None
+    assert isinstance(r, Rectified)
     x_mm, y_mm = _red_dot_mm(r)
     origin_x, origin_y = r.board_origin_mm
     assert abs((x_mm - origin_x) - DOT_FROM_BOARD_MM[0]) < 1.0
@@ -82,23 +83,49 @@ def test_a_point_on_the_glass_lands_at_the_same_board_relative_position_in_every
 
 def test_rectified_view_covers_the_scene_beyond_the_board():
     r = rectify(_warped_scene(), mm_per_px=MM_PER_PX)
-    assert r is not None
+    assert isinstance(r, Rectified)
     assert r.image.shape[1] > BOARD_W
     assert r.image.shape[0] > BOARD_H
 
 
 def test_rectify_rejects_corners_from_a_single_board_row():
     # Glare hides all but the top two square rows, leaving one collinear row of inner corners.
-    assert rectify(_warped_scene(square_rows_visible=2)) is None
+    assert rectify(_warped_scene(square_rows_visible=2)) == Rejected("board_partly_hidden")
 
 
 def test_rectify_still_measures_when_two_corner_rows_survive():
-    assert rectify(_warped_scene(square_rows_visible=3)) is not None
+    assert isinstance(rectify(_warped_scene(square_rows_visible=3)), Rectified)
 
 
 def test_rectify_rejects_an_output_too_large_to_be_a_sane_view():
-    assert rectify(_warped_scene(), mm_per_px=0.05) is None
+    assert rectify(_warped_scene(), mm_per_px=0.05) == Rejected("view_too_large")
 
 
-def test_rectify_returns_none_when_no_board_is_present():
-    assert rectify(np.zeros((400, 400, 3), np.uint8)) is None
+def test_rectify_rejects_a_capture_with_no_board():
+    assert rectify(np.zeros((400, 400, 3), np.uint8)) == Rejected("board_not_found")
+
+
+def test_a_square_on_view_reports_no_tilt_and_the_capture_resolution():
+    r = rectify(_warped_scene(SQUARE_ON))
+    assert isinstance(r, Rectified)
+    assert r.view_angle_deg < 5.0
+    assert abs(r.native_mm_per_px - MM_PER_PX) < 0.1 * MM_PER_PX
+
+
+def test_an_off_axis_view_reports_a_larger_angle_than_a_square_on_view():
+    square_on = rectify(_warped_scene(SQUARE_ON))
+    off_axis = rectify(_warped_scene(VIEW_A))
+    assert isinstance(square_on, Rectified) and isinstance(off_axis, Rectified)
+    assert off_axis.view_angle_deg > square_on.view_angle_deg
+
+
+def test_valid_marks_the_pixels_the_capture_covered():
+    r = rectify(_warped_scene(VIEW_A), mm_per_px=MM_PER_PX)
+    assert isinstance(r, Rectified)
+    assert r.valid.shape == r.image.shape[:2]
+    assert not r.valid.all()
+    assert r.valid.mean() > 0.5
+    origin_x, origin_y = r.board_origin_mm
+    centre_col = round((origin_x + SQUARES_X * SQUARE_MM / 2) / MM_PER_PX)
+    centre_row = round((origin_y + SQUARES_Y * SQUARE_MM / 2) / MM_PER_PX)
+    assert r.valid[centre_row, centre_col]

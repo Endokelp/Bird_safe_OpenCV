@@ -10,7 +10,7 @@ import sys
 import cv2
 import numpy as np
 
-from birdsafe.calib import rectify
+from birdsafe.calib import Rejected, rectify
 from birdsafe.coverage import check_coverage
 from birdsafe.markers import detect_markers
 from birdsafe.quality import unknown_regions
@@ -25,8 +25,8 @@ def main(paths: list[str]) -> int:
             print(f"{path}: unreadable")
             continue
         rectified = rectify(image)
-        if rectified is None:
-            print(f"{path}: no usable board view (not found, too oblique, or partly hidden)")
+        if isinstance(rectified, Rejected):
+            print(f"{path}: {rectified.reason}")
             continue
         rms.append(rectified.reproj_rms_mm)
         markers = detect_markers(rectified.image, rectified.mm_per_px)
@@ -34,7 +34,9 @@ def main(paths: list[str]) -> int:
         # ponytail: no pane quadrilateral until Phase 6. Repeatability measures the
         # full rectified frame, which is enough to compare captures of one taped sheet.
         pane = np.ones(markers.mask.shape, bool)
-        coverage = check_coverage(pane, markers.mask, quality.unknown, rectified.mm_per_px)
+        coverage = check_coverage(
+            pane, markers.mask, quality.unknown | ~rectified.valid, rectified.mm_per_px
+        )
         gaps.append(coverage.largest_gap_mm)
     if len(rms) < 2:
         print(f"only {len(rms)} usable captures, cannot report spread")

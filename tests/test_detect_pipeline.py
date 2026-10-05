@@ -36,7 +36,7 @@ def test_glare_over_a_missing_dot_demotes_the_finding_to_possible():
 
 
 def test_repeatability_reports_gap_spread_on_two_usable_views(tmp_path, capsys):
-    from birdsafe.calib import rectify
+    from birdsafe.calib import Rectified, rectify
     from tests.test_calib import VIEW_A, VIEW_B, _warped_scene
 
     paths = []
@@ -44,7 +44,7 @@ def test_repeatability_reports_gap_spread_on_two_usable_views(tmp_path, capsys):
         path = tmp_path / f"view{i}.png"
         cv2.imwrite(str(path), _warped_scene(view))
         paths.append(str(path))
-        assert rectify(_warped_scene(view)) is not None
+        assert isinstance(rectify(_warped_scene(view)), Rectified)
 
     assert repeatability_main(paths) == 0
     out = capsys.readouterr().out

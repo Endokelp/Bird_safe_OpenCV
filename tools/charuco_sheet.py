@@ -13,6 +13,8 @@ PAGE_W_PT, PAGE_H_PT = 792.0, 612.0  # US Letter landscape
 MM_TO_PT = 72.0 / 25.4
 DPI = 300.0
 TEXT_SIZE_PT = 10.0
+BOARD_W_PT = SQUARES_X * SQUARE_MM * MM_TO_PT
+BOARD_H_PT = SQUARES_Y * SQUARE_MM * MM_TO_PT
 
 
 def birdsafe_board() -> cv2.aruco.CharucoBoard:
@@ -28,6 +30,34 @@ def _pdf_object(number: int, body: bytes) -> bytes:
     return f"{number} 0 obj\n".encode("latin-1") + body + b"\nendobj\n"
 
 
+def _layout_pt() -> tuple[float, float, float]:
+    """Returns (board_x, board_y, text_baseline) in PDF points, origin at the page's bottom-left."""
+    board_x = (PAGE_W_PT - BOARD_W_PT) / 2.0
+
+    gap_pt = 16.0
+    baseline_margin_pt = 8.0
+    block_h = BOARD_H_PT + gap_pt + TEXT_SIZE_PT + baseline_margin_pt
+    block_bottom = (PAGE_H_PT - block_h) / 2.0
+    text_baseline = block_bottom + baseline_margin_pt
+    board_y = text_baseline + TEXT_SIZE_PT + gap_pt
+    return board_x, board_y, text_baseline
+
+
+def sheet_footprint_mm() -> tuple[float, float, float, float]:
+    """Returns (x0, y0, x1, y1) of the printed page in the board frame.
+
+    The board frame has its origin at the board's top-left square corner and y pointing down.
+    """
+    board_x, board_y, _text_baseline = _layout_pt()
+    board_top = board_y + BOARD_H_PT
+    return (
+        -board_x / MM_TO_PT,
+        -(PAGE_H_PT - board_top) / MM_TO_PT,
+        (PAGE_W_PT - board_x) / MM_TO_PT,
+        board_top / MM_TO_PT,
+    )
+
+
 def sheet_pdf() -> bytes:
     """Builds a one-page PDF with the board printed at exact physical size.
 
@@ -39,9 +69,7 @@ def sheet_pdf() -> bytes:
     img_h = round(SQUARES_Y * SQUARE_MM * px_per_mm)
     image_bytes = zlib.compress(birdsafe_board().generateImage((img_w, img_h)).tobytes())
 
-    board_w_pt = SQUARES_X * SQUARE_MM * MM_TO_PT
-    board_h_pt = SQUARES_Y * SQUARE_MM * MM_TO_PT
-    board_x = (PAGE_W_PT - board_w_pt) / 2.0
+    board_x, board_y, text_baseline = _layout_pt()
 
     text = (
         f"{SQUARES_X} x {SQUARES_Y} squares, {SQUARE_MM:.0f} mm squares, "
@@ -50,16 +78,9 @@ def sheet_pdf() -> bytes:
         f"Board width must measure {SQUARES_X * SQUARE_MM:.0f} mm."
     )
 
-    gap_pt = 16.0
-    baseline_margin_pt = 8.0
-    block_h = board_h_pt + gap_pt + TEXT_SIZE_PT + baseline_margin_pt
-    block_bottom = (PAGE_H_PT - block_h) / 2.0
-    text_baseline = block_bottom + baseline_margin_pt
-    board_y = text_baseline + TEXT_SIZE_PT + gap_pt
-
     content = (
         "q\n"
-        f"{board_w_pt:.6f} 0 0 {board_h_pt:.6f} {board_x:.6f} {board_y:.6f} cm\n"
+        f"{BOARD_W_PT:.6f} 0 0 {BOARD_H_PT:.6f} {board_x:.6f} {board_y:.6f} cm\n"
         "/Im0 Do\n"
         "Q\n"
         "BT\n"

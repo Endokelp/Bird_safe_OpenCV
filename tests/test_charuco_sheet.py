@@ -2,7 +2,7 @@
 
 import re
 
-from tools.charuco_sheet import sheet_pdf
+from tools.charuco_sheet import SQUARE_MM, SQUARES_X, SQUARES_Y, sheet_footprint_mm, sheet_pdf
 
 CM_RE = re.compile(rb"([\d.]+) 0 0 ([\d.]+) [\d.]+ [\d.]+ cm\n/Im0 Do")
 XREF_ENTRY_RE = re.compile(rb"(\d{10}) 00000 n \n")
@@ -32,3 +32,11 @@ def test_xref_offsets_point_at_their_object_headers():
     for number, offset in enumerate(offsets, start=1):
         header = f"{number} 0 obj".encode("latin-1")
         assert pdf[offset : offset + len(header)] == header
+
+
+def test_footprint_is_a_us_letter_landscape_page_that_contains_the_board():
+    x0, y0, x1, y1 = sheet_footprint_mm()
+    assert abs((x1 - x0) - 279.4) < 0.1
+    assert abs((y1 - y0) - 215.9) < 0.1
+    assert x0 <= 0 and y0 <= 0
+    assert x1 >= SQUARES_X * SQUARE_MM and y1 >= SQUARES_Y * SQUARE_MM
