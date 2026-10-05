@@ -160,6 +160,12 @@ def _loop_cap_message(metrics: CaptureMetrics) -> str:
     )
 
 
+def _fixed_note(fixed: tuple[tuple[float, float], ...]) -> str:
+    if not fixed:
+        return ""
+    return "The repaired spot now passes. " if len(fixed) == 1 else f"{len(fixed)} repaired spots now pass. "
+
+
 def _fixed_targets(
     metrics: CaptureMetrics, history: Sequence[TraceRecord]
 ) -> tuple[tuple[float, float], ...]:
@@ -189,11 +195,13 @@ def _first_match(metrics: CaptureMetrics, history: Sequence[TraceRecord]) -> Dec
         return Decision(
             "repair",
             "confirmed_gap",
-            _confirmed_gap_message(metrics),
+            _fixed_note(fixed) + _confirmed_gap_message(metrics),
             targets_mm=metrics.repair_targets,
             fixed_mm=fixed,
         )
-    return Decision("pass", "all_clear", _all_clear_message(metrics), fixed_mm=fixed)
+    return Decision(
+        "pass", "all_clear", _fixed_note(fixed) + _all_clear_message(metrics), fixed_mm=fixed
+    )
 
 
 def _stalled(before: CaptureMetrics, after: CaptureMetrics) -> bool:
