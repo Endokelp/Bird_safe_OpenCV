@@ -67,7 +67,7 @@ footer{padding-top:16px;padding-bottom:32px;color:var(--mute);font-size:.8rem;bo
     <li>Tape the printed sheet flat on the glass, beside the markings.</li>
     <li>Keep the whole sheet and the marked area in frame.</li>
     <li>Stand so the sheet fills about a third of the photo width, roughly square-on (under 40 degrees).</li>
-    <li>Avoid the sun's reflection on the dots.</li>
+    <li>Avoid the sun's reflection on the dots, and use good light: a dark photo cannot be read.</li>
   </ol>
 </details>
 
@@ -101,6 +101,7 @@ footer{padding-top:16px;padding-bottom:32px;color:var(--mute);font-size:.8rem;bo
   <a id="shotlink" target="_blank" rel="noopener"><img id="shot" alt="Annotated result: measured gaps drawn on your photo"></a>
   <p id="nosheet" class="note hidden">The calibration sheet was not found. Tape the whole printed sheet flat on the glass, keep all four edges in frame, avoid glare on it, and retake.</p>
   <button id="more" type="button">Add another photo to this scan</button>
+  <button id="moregal" type="button" class="alt">Add one from the gallery</button>
   <button id="fresh" type="button" class="alt">Start a new scan</button>
 </section>
 </main>
@@ -140,7 +141,7 @@ footer{padding-top:16px;padding-bottom:32px;color:var(--mute);font-size:.8rem;bo
     busy = !!text;
     $("busy").classList.toggle("hidden", !busy);
     $("busytext").textContent = text || "";
-    ["shoot", "pick", "more", "fresh"].forEach(function (id) { $(id).disabled = busy; });
+    ["shoot", "pick", "more", "moregal", "fresh"].forEach(function (id) { $(id).disabled = busy; });
   }
   function showError(t) {
     $("error").textContent = t; $("error").classList.remove("hidden");
@@ -233,6 +234,7 @@ footer{padding-top:16px;padding-bottom:32px;color:var(--mute);font-size:.8rem;bo
   $("shoot").onclick = function () { $("cam").click(); };
   $("pick").onclick = function () { $("gal").click(); };
   $("more").onclick = function () { $("cam").click(); };
+  $("moregal").onclick = function () { $("gal").click(); };
   $("fresh").onclick = function () {
     session = null; store("sessionStorage", "set", "session", "");
     $("result").classList.add("hidden"); $("error").classList.add("hidden");

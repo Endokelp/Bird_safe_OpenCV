@@ -122,8 +122,10 @@ def _capture_message(rule: str, metrics: CaptureMetrics) -> str:
 def _unknown_message(metrics: CaptureMetrics) -> str:
     centred = f", centred {_where(metrics.unknown_centroid_mm)}" if metrics.unknown_centroid_mm else ""
     return (
-        f"{_percent(metrics.unknown_fraction)} of the pane could not be read{centred}. "
-        "Step sideways so the glare moves off it, then retake the photo."
+        f"{_percent(metrics.unknown_fraction)} of the area checked could not be read{centred}. "
+        # The unknown mask is glare or missing detail (blur, darkness); the advice covers both.
+        "Add light if it is dark, step sideways if a reflection sits on the dots, "
+        "hold the phone steady, then retake the photo."
     )
 
 
@@ -156,7 +158,7 @@ def _loop_cap_message(metrics: CaptureMetrics) -> str:
     return (
         "Stopping here, because more photos are not improving the result. "
         f"Found {_gaps(len(metrics.repair_targets))} wider than 2 inches, and "
-        f"{_percent(metrics.unknown_fraction)} of the pane could not be read."
+        f"{_percent(metrics.unknown_fraction)} of the area checked could not be read."
     )
 
 
