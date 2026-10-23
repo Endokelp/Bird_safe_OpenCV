@@ -16,7 +16,8 @@ TOPHAT_SCALE = 1.6
 # broke into C shapes. 1.5 found 31/31 real dots in session01; 2.0 added a false dot.
 BLOCK_SCALE = 1.5
 ADAPTIVE_C = -2
-MIN_CIRCULARITY = 0.6
+# Real dots measured >= 0.88 in session01, reflection blobs <= 0.74; a filled square is 0.79.
+MIN_CIRCULARITY = 0.8
 # ponytail: real 19.05 mm dots measured 18.4-19.1 mm (session01); 0.5 let 10 mm reflections in.
 DIAMETER_LO = 0.7
 DIAMETER_HI = 2.0
