@@ -9,7 +9,7 @@
 3. If it does not, the print was scaled. Reprint and remeasure. The app assumes the nominal
    board size, so a scaled print makes every reported distance wrong by the same percentage.
 
-**Measured board width: not measured yet**
+**Measured board width: 210 mm, reported by the user on 2026-10-20.**
 
 ## Mount the sheet
 
