@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bird-safe gap check</title>
+<style>
+:root{--bg:#eef0ea;--ink:#1d2a24;--mute:#56645c;--line:#c5ccc1;--panel:#f8f9f5;--accent:#2f5d50;--accent-ink:#fff;
+--pass:#1f7a45;--repair:#b3261e;--warn:#a86400;--focus:#0b57d0;--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#141a17;--ink:#e4ebe6;--mute:#9aa9a0;--line:#33403a;--panel:#1b2420;--accent:#6fb59f;--accent-ink:#0e1a15;
+--pass:#4cc482;--repair:#ff7b72;--warn:#e8a73a;--focus:#8ab4f8}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main,footer{max-width:640px;margin:0 auto;padding:0 16px}
+header{border-bottom:2px solid var(--ink);padding:24px 0 16px;margin-bottom:16px}
+h1{margin:0;font-size:1.6rem;line-height:1.15;letter-spacing:-.01em}
+.pitch{margin:6px 0 0;color:var(--mute)}
+.tick{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+details{border:1px solid var(--line);background:var(--panel);margin-bottom:16px}
+summary{min-height:48px;display:flex;align-items:center;padding:0 12px;font-weight:600;cursor:pointer}
+details ol{margin:0;padding:0 16px 12px 36px}
+details li{margin:6px 0}
+fieldset{border:1px solid var(--line);margin:0 0 16px;padding:8px 12px 12px;min-width:0}
+legend{padding:0 6px}
+.dots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.dots label{display:flex;align-items:center;gap:8px;min-height:48px;padding:0 10px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+.dots label:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.dots input[type=radio]{width:20px;height:20px;accent-color:var(--accent)}
+#custom{width:100%;min-height:48px;font:inherit;padding:0 10px;margin-top:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+button{font:inherit;min-height:48px;padding:0 16px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;cursor:pointer;width:100%;margin-bottom:8px}
+button.alt{background:transparent;color:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button#shoot{min-height:56px;font-size:1.1rem}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.hidden{display:none!important}
+#busy{display:flex;align-items:center;gap:12px;border:1px dashed var(--ink);padding:14px;margin:8px 0 16px;font-family:var(--mono);font-size:.9rem}
+.spin{width:20px;height:20px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 1s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+#error{border-left:6px solid var(--repair);background:var(--panel);padding:12px 14px;margin:8px 0 16px}
+.verdict{border-left:10px solid var(--c);background:var(--panel);padding:12px 14px;margin:8px 0 12px}
+.verdict .word{display:block;font:800 2.4rem/1.1 var(--mono);color:var(--c);letter-spacing:.04em}
+.verdict.pass{--c:var(--pass)}.verdict.repair{--c:var(--repair)}.verdict.recapture{--c:var(--warn)}
+.verdict p{margin:6px 0 0}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px}
+.metrics div{background:var(--panel);padding:10px 12px}
+.metrics b{display:block;font:700 1.2rem var(--mono)}
+.metrics span{font-size:.8rem;color:var(--mute)}
+#shot{display:block;width:100%;height:auto;border:1px solid var(--line);margin-bottom:16px}
+#shotlink{display:block}
+.note{background:var(--panel);border:1px solid var(--line);padding:10px 14px;margin-bottom:12px}
+footer{padding-top:16px;padding-bottom:32px;color:var(--mute);font-size:.8rem;border-top:1px solid var(--line);margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="tick">Window marking inspection</div>
+  <h1>Bird-safe gap check</h1>
+  <p class="pitch">Find the gaps in a bird-safe window treatment before the job is signed off.</p>
+</header>
+
+<details>
+  <summary>How to take the photo</summary>
+  <ol>
+    <li>Tape the printed sheet flat on the glass, beside the markings.</li>
+    <li>Keep the whole sheet and the marked area in frame.</li>
+    <li>Stand so the sheet fills about a third of the photo width, roughly square-on (under 40 degrees).</li>
+    <li>Avoid the sun's reflection on the dots.</li>
+  </ol>
+</details>
+
+<fieldset>
+  <legend>Dot size</legend>
+  <div class="dots" id="dots">
+    <label><input type="radio" name="dot" value="19.05" checked> 3/4 in</label>
+    <label><input type="radio" name="dot" value="12.7"> 1/2 in</label>
+    <label><input type="radio" name="dot" value="6.35"> 1/4 in</label>
+    <label><input type="radio" name="dot" value="custom"> Custom</label>
+  </div>
+  <input id="custom" type="number" inputmode="decimal" min="1" max="100" step="0.01" placeholder="Dot diameter in mm" aria-label="Custom dot diameter in mm" class="hidden">
+</fieldset>
+
+<button id="shoot" type="button">Take photo</button>
+<button id="pick" type="button" class="alt">Choose from gallery</button>
+<input id="cam" type="file" accept="image/*" capture="environment" class="hidden">
+<input id="gal" type="file" accept="image/*" class="hidden">
+
+<div id="busy" class="hidden" role="status"><span class="spin"></span><span id="busytext"></span></div>
+<div id="error" class="hidden" role="alert"></div>
+
+<section id="result" aria-live="polite" class="hidden">
+  <div id="verdict" class="verdict"><span class="word" id="word"></span><p id="msg"></p></div>
+  <div class="metrics">
+    <div><b id="m-gap"></b><span>largest gap (limit 50.8 mm)</span></div>
+    <div><b id="m-dots"></b><span>dots found</span></div>
+    <div><b id="m-unk"></b><span>unreadable</span></div>
+    <div><b id="m-frame"></b><span>photo in this scan</span></div>
+  </div>
+  <a id="shotlink" target="_blank" rel="noopener"><img id="shot" alt="Annotated result: measured gaps drawn on your photo"></a>
+  <p id="nosheet" class="note hidden">The calibration sheet was not found. Tape the whole printed sheet flat on the glass, keep all four edges in frame, avoid glare on it, and retake.</p>
+  <button id="more" type="button">Add another photo to this scan</button>
+  <button id="fresh" type="button" class="alt">Start a new scan</button>
+</section>
+</main>
+<footer>Runs OpenCV 5 on AWS Lambda (Graviton). Photos are processed and discarded; only measurement masks are kept for 7 days.</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LIMIT = 50.8, MAXSIDE = 2400, TIMEOUT = 60000, DOWN = "The checker did not answer. Check your connection and try again.";
+  var session = null, busy = false, shotUrl = null;
+
+  function store(kind, op, k, v) { // storage can throw in private windows
+    try { var s = window[kind]; return op === "get" ? s.getItem(k) : s.setItem(k, v); } catch (e) { return null; }
+  }
+  session = store("sessionStorage", "get", "session") || null;
+
+  // dot size
+  var radios = document.querySelectorAll("input[name=dot]"), custom = $("custom");
+  function applyDot() {
+    var r = document.querySelector("input[name=dot]:checked");
+    custom.classList.toggle("hidden", r.value !== "custom");
+    store("localStorage", "set", "dot", r.value === "custom" ? "custom:" + custom.value : r.value);
+  }
+  var saved = store("localStorage", "get", "dot") || "";
+  if (saved.indexOf("custom:") === 0) { custom.value = saved.slice(7); saved = "custom"; }
+  radios.forEach(function (r) { if (r.value === saved) r.checked = true; r.addEventListener("change", applyDot); });
+  custom.addEventListener("input", applyDot);
+  applyDot();
+
+  function dotMm() {
+    var r = document.querySelector("input[name=dot]:checked").value;
+    var v = r === "custom" ? parseFloat(custom.value) : parseFloat(r);
+    return v > 0 ? v : null;
+  }
+
+  function setBusy(text) {
+    busy = !!text;
+    $("busy").classList.toggle("hidden", !busy);
+    $("busytext").textContent = text || "";
+    ["shoot", "pick", "more", "fresh"].forEach(function (id) { $(id).disabled = busy; });
+  }
+  function showError(t) {
+    $("error").textContent = t; $("error").classList.remove("hidden");
+  }
+
+  // downscale to JPEG base64 (no data: prefix)
+  function load(file) {
+    if (window.createImageBitmap) {
+      return createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () { return viaImg(file); });
+    }
+    return viaImg(file);
+  }
+  function viaImg(file) {
+    return new Promise(function (ok, no) {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () { URL.revokeObjectURL(u); ok(im); };
+      im.onerror = function () { URL.revokeObjectURL(u); no(new Error("That file could not be read as an image.")); };
+      im.src = u;
+    });
+  }
+  function toJpeg(file) {
+    return load(file).then(function (im) {
+      var w = im.width || im.naturalWidth, h = im.height || im.naturalHeight, k = Math.min(1, MAXSIDE / Math.max(w, h));
+      var c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      var d = c.toDataURL("image/jpeg", 0.9); // ponytail: no re-encode loop; 2400 px at q0.9 is ~1-2 MB
+      return d.slice(d.indexOf(",") + 1);
+    });
+  }
+
+  function scan(file) {
+    var mm = dotMm();
+    $("error").classList.add("hidden");
+    if (!mm) { showError("Enter the dot diameter in mm first."); return; }
+    setBusy("Uploading…");
+    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, TIMEOUT), t2;
+    toJpeg(file).then(function (b64) {
+      t2 = setTimeout(function () { $("busytext").textContent = "Measuring gaps… (first scan can take ~10 s)"; }, 600);
+      return fetch("scan", {
+        method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+        body: JSON.stringify({ session: session, image: b64, dot_mm: mm })
+      });
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        var j = null; try { j = JSON.parse(t); } catch (e) { /* non-JSON gateway reply */ }
+        if (!j) throw new Error(DOWN);
+        if (!res.ok) throw new Error(j.error || DOWN);
+        return j;
+      });
+    }).then(render).catch(function (e) {
+      showError(e.name === "AbortError" ? "The checker took longer than 60 seconds. Try again; the first scan after a pause is slowest."
+        : (e instanceof TypeError ? DOWN : e.message || DOWN));
+    }).then(function () { clearTimeout(timer); clearTimeout(t2); setBusy(""); });
+  }
+
+  function render(r) {
+    session = r.session || session;
+    store("sessionStorage", "set", "session", session || "");
+    var a = r.action === "pass" || r.action === "repair" ? r.action : "recapture";
+    $("verdict").className = "verdict " + a;
+    $("word").textContent = a.toUpperCase();
+    $("msg").textContent = r.message || "";
+    var g = r.largest_gap_mm;
+    $("m-gap").textContent = typeof g === "number" ? g.toFixed(1) + " mm" : "n/a";
+    $("m-gap").style.color = typeof g === "number" && g > LIMIT ? "var(--repair)" : "";
+    $("m-dots").textContent = r.dots_found == null ? "n/a" : r.dots_found;
+    $("m-unk").textContent = typeof r.unknown_fraction === "number" ? Math.round(r.unknown_fraction * 100) + "%" : "n/a";
+    $("m-frame").textContent = r.frame == null ? "n/a" : "#" + r.frame;
+    var has = !!r.image;
+    $("shotlink").classList.toggle("hidden", !has);
+    $("nosheet").classList.toggle("hidden", has);
+    if (has) { // browsers block opening data: URLs in a new tab, so link a blob URL instead
+      var bin = atob(r.image), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      if (shotUrl) URL.revokeObjectURL(shotUrl);
+      shotUrl = URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
+      $("shot").src = $("shotlink").href = shotUrl;
+    }
+    $("result").classList.remove("hidden");
+    $("verdict").scrollIntoView({ block: "start" });
+  }
+
+  function pick(input) {
+    input.addEventListener("change", function () {
+      var f = input.files && input.files[0]; input.value = "";
+      if (f && !busy) scan(f);
+    });
+  }
+  pick($("cam")); pick($("gal"));
+  $("shoot").onclick = function () { $("cam").click(); };
+  $("pick").onclick = function () { $("gal").click(); };
+  $("more").onclick = function () { $("cam").click(); };
+  $("fresh").onclick = function () {
+    session = null; store("sessionStorage", "set", "session", "");
+    $("result").classList.add("hidden"); $("error").classList.add("hidden");
+    window.scrollTo(0, 0);
+  };
+})();
+</script>
+</body>
+</html>

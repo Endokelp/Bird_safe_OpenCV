@@ -11,6 +11,9 @@ data/raw/
 # Local agent tool state.
 .agents/
 
+# Lambda package built by the deploy script.
+build/
+
 __pycache__/
 *.pyc
 .venv/
