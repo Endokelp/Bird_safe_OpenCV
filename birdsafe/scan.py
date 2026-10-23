@@ -9,7 +9,7 @@ import numpy as np
 from birdsafe.calib import Rectified, Rejected
 from birdsafe.coverage import check_coverage
 from birdsafe.fusion import Observation, fuse
-from birdsafe.markers import detect_markers
+from birdsafe.markers import DOT_MM, detect_markers
 from birdsafe.policy import CaptureMetrics, TraceRecord, capture_rule, record
 from birdsafe.quality import unknown_regions
 from tools.charuco_sheet import sheet_footprint_mm
@@ -19,6 +19,7 @@ from tools.charuco_sheet import sheet_footprint_mm
 class ScanState:
     canvas_mm: tuple[float, float, float, float]
     mm_per_px: float = 0.5
+    dot_mm: float = DOT_MM
     observations: tuple[Observation, ...] = ()
     trace: tuple[TraceRecord, ...] = ()
 
@@ -39,9 +40,9 @@ def _capture_fields(capture: Rectified | Rejected) -> dict:
     }
 
 
-def _observe(capture: Rectified) -> Observation:
-    markers = detect_markers(capture.image, capture.mm_per_px)
-    quality = unknown_regions(capture.image, capture.mm_per_px)
+def _observe(capture: Rectified, dot_mm: float) -> Observation:
+    markers = detect_markers(capture.image, capture.mm_per_px, dot_mm)
+    quality = unknown_regions(capture.image, capture.mm_per_px, dot_mm)
     return Observation(
         markers.mask, quality.unknown | ~capture.valid, capture.board_origin_mm, capture.mm_per_px
     )
@@ -101,7 +102,7 @@ def scan_step(state: ScanState, capture: Rectified | Rejected) -> ScanState:
         largest_gap_mm=0.0,
     )
     if capture_rule(probe) is None:
-        observations += (_observe(capture),)
+        observations += (_observe(capture, state.dot_mm),)
     metrics = replace(probe, **_fused_fields(state, observations))
 
     return replace(

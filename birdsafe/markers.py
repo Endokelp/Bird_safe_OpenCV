@@ -12,10 +12,16 @@ WORKING_MM_PER_PX = 0.5
 # Retune if real 6 mm dots smear. Held-out captures stay sealed.
 PRE_BLUR_SIGMA = 1.2
 TOPHAT_SCALE = 1.6
+# A dot-sized block left flat dot interiors below the local mean, so big dots became rings that
+# broke into C shapes. 1.5 found 31/31 real dots in session01; 2.0 added a false dot.
+BLOCK_SCALE = 1.5
 ADAPTIVE_C = -2
 MIN_CIRCULARITY = 0.6
-DIAMETER_LO = 0.5
+# ponytail: real 19.05 mm dots measured 18.4-19.1 mm (session01); 0.5 let 10 mm reflections in.
+DIAMETER_LO = 0.7
 DIAMETER_HI = 2.0
+# Cuts thin bright bridges (tape edges, reflections) that merge a dot into a non-round blob.
+OPEN_SCALE = 0.25
 
 
 @dataclass(frozen=True)
@@ -42,15 +48,19 @@ def detect_markers(image, mm_per_px, expected_dot_mm=DOT_MM) -> MarkerResult:
 
     dot_px = expected_dot_mm / WORKING_MM_PER_PX
     se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (_odd_ksize(TOPHAT_SCALE * dot_px),) * 2)
-    block = _odd_ksize(dot_px)
-    union = np.zeros((work_h, work_w), np.uint8)
+    block = _odd_ksize(BLOCK_SCALE * dot_px)
+    opener = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (_odd_ksize(OPEN_SCALE * dot_px),) * 2)
+    # Each polarity is filtered on its own. On a dense grid the glass between bright dots is a
+    # dark-hat response too, and OR-ing the masks merged every dot into one lattice.
+    contours = []
     for morph in (cv2.MORPH_BLACKHAT, cv2.MORPH_TOPHAT):
         response = cv2.morphologyEx(working, morph, se)
-        union |= cv2.adaptiveThreshold(
+        binary = cv2.adaptiveThreshold(
             response, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block, ADAPTIVE_C
         )
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, opener)
+        contours += cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
 
-    contours, _ = cv2.findContours(union, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     mask_work = np.zeros((work_h, work_w), np.uint8)
     centers = []
     lo_mm = DIAMETER_LO * expected_dot_mm

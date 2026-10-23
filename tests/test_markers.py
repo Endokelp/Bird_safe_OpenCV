@@ -78,3 +78,13 @@ def test_a_large_square_is_not_a_dot():
         if math.hypot(x_mm - square_center[0], y_mm - square_center[1]) < 15
     ]
     assert near == []
+
+
+def test_large_dots_on_a_dense_grid_stay_separate():
+    # Session01 geometry: 3/4 inch dots at 40 mm. The glass between them is narrower than the
+    # hat kernel, so a merged polarity mask turned the whole grid into one blob.
+    dot_mm = 19.05
+    pane = make_pane(300, 300, 40, dot_mm, 0.5)
+    result = detect_markers(render_pane(pane, dark_on_light=False), pane.mm_per_px, dot_mm)
+    tp, fp, fn = _match(result.centers_mm, _truth_centers_mm(300, 300, 40))
+    assert fn == 0 and fp == 0 and tp == 64
