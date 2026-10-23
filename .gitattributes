@@ -1,2 +1,2 @@
-# Shell scripts must keep LF or bash fails on .
+# Shell scripts must keep LF line endings or bash fails on the carriage returns.
 *.sh text eol=lf
