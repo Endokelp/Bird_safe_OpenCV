@@ -295,7 +295,7 @@ def test_every_rule_has_its_own_message_and_none_claims_the_window_is_safe():
 def test_the_unknown_area_message_gives_the_percent_and_where_to_aim():
     message = decide(_glare(), []).message
     assert "20%" in message
-    assert "150 mm across and 80 mm down from the pane's top-left corner" in message
+    assert "150 mm across and 80 mm down from the top-left corner of the area checked" in message
     assert "sideways" in message
 
 
@@ -308,7 +308,7 @@ def test_the_confirmed_gap_message_gives_the_count_the_largest_gap_and_the_limit
     assert "2 gaps" in d.message
     assert "74 mm" in d.message
     assert "2 inch (51 mm)" in d.message
-    assert "130 mm across and 130 mm down from the pane's top-left corner" in d.message
+    assert "130 mm across and 130 mm down from the top-left corner of the area checked" in d.message
 
 
 def test_the_all_clear_message_asks_about_placement_and_names_the_unchecked_area():

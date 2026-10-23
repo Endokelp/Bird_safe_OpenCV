@@ -104,7 +104,7 @@ def capture_rule(metrics: CaptureMetrics) -> str | None:
 
 def _where(point: tuple[float, float]) -> str:
     x, y = point
-    return f"{x:.0f} mm across and {y:.0f} mm down from the pane's top-left corner"
+    return f"{x:.0f} mm across and {y:.0f} mm down from the top-left corner of the area checked"
 
 
 def _percent(fraction: float) -> str:
