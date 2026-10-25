@@ -28,11 +28,12 @@ def patch_canvas(capture: Rectified, dot_mm: float) -> tuple[float, float, float
          max(0, round((x0 + ox) / scale)):max(0, round((x1 + ox) / scale))] = 0
     # Dots within three rule lengths of each other join one group, so a grid too sparse for the
     # rule is still measured as one area and fails. A stray blob farther out than that must not
-    # stretch the area under test over bare glass.
-    # a fixed reach; a pattern with gaps over 150 mm splits and checks only its largest
-    # part. Ask the user to mark the pane outline if that case shows up in the field.
-    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (round(3 * RULE_MM / scale) | 1,) * 2)
-    count, groups = cv2.connectedComponents(cv2.dilate(mask, reach))
+    # stretch the area under test over bare glass. The reach is fixed: a pattern with gaps over
+    # 150 mm splits and only its largest part is checked, until a pane outline step replaces this.
+    # Thresholding the distance to the nearest dot is a disk dilation in O(pixels); an elliptical
+    # kernel of three rule lengths took 0.6 s on a desktop.
+    near = cv2.distanceTransform((mask == 0).astype(np.uint8), cv2.DIST_L2, 5) <= 1.5 * RULE_MM / scale
+    count, groups = cv2.connectedComponents(near.astype(np.uint8))
     if count < 2:
         return None
     sizes = np.bincount(groups[mask > 0], minlength=count)
