@@ -8,7 +8,7 @@ import numpy as np
 
 DOT_MM = 6.0
 WORKING_MM_PER_PX = 0.5
-# ponytail: 1.2 px at 0.5 mm/px. Stops texture from fragmenting adaptive threshold.
+# 1.2 px at 0.5 mm/px. Stops texture from fragmenting adaptive threshold.
 # Retune if real 6 mm dots smear. Held-out captures stay sealed.
 PRE_BLUR_SIGMA = 1.2
 TOPHAT_SCALE = 1.6
@@ -18,7 +18,7 @@ BLOCK_SCALE = 1.5
 ADAPTIVE_C = -2
 # Real dots measured >= 0.88 in session01, reflection blobs <= 0.74; a filled square is 0.79.
 MIN_CIRCULARITY = 0.8
-# ponytail: real 19.05 mm dots measured 18.4-19.1 mm (session01); 0.5 let 10 mm reflections in.
+# real 19.05 mm dots measured 18.4-19.1 mm (session01); 0.5 let 10 mm reflections in.
 DIAMETER_LO = 0.7
 DIAMETER_HI = 2.0
 # Cuts thin bright bridges (tape edges, reflections) that merge a dot into a non-round blob.

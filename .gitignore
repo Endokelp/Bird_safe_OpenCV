@@ -1,15 +1,6 @@
-# Competition strategy and research. Never publish.
-WIN-AND-PLACE-CLAUDE.txt
-CONTEST-DOSSIER.md
-MASTER-BRIEF.md
-PHASE-STATE.md
-
-# Captures are large and may show private property. Kept out of the repo.
+# Captures are large and may show private property.
 captures/
 data/raw/
-
-# Local agent tool state.
-.agents/
 
 # Lambda package built by the deploy script.
 build/

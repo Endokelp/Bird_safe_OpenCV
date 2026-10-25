@@ -12,17 +12,17 @@ from dataclasses import asdict, dataclass
 from birdsafe.coverage import RULE_MM
 from birdsafe.markers import DOT_MM
 
-# ponytail: a guess; synthetic captures read 0.06 mm. Retune on development captures, never on
+# a guess; synthetic captures read 0.06 mm. Retune on development captures, never on
 # held-out sessions.
 MAX_REPROJ_RMS_MM = 1.0
 # Capture protocol limit.
 MAX_VIEW_ANGLE_DEG = 45.0
 # Four capture pixels across a dot.
 MAX_NATIVE_MM_PER_PX = DOT_MM / 4
-# ponytail: a guess at how much unreadable glass a pass can tolerate. Retune on development
+# a guess at how much unreadable glass a pass can tolerate. Retune on development
 # captures, never on held-out sessions.
 MAX_UNKNOWN_FRACTION = 0.05
-# ponytail: a guess at the smallest drop that counts as progress; sensor noise could exceed it.
+# a guess at the smallest drop that counts as progress; sensor noise could exceed it.
 # Retune on development captures, never on held-out sessions.
 MIN_UNKNOWN_GAIN = 0.01
 MAX_STALLED_RECAPTURES = 3

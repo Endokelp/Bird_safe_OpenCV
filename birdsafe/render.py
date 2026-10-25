@@ -12,7 +12,7 @@ from tools.charuco_sheet import sheet_footprint_mm
 
 GREEN, MAGENTA, RED, ORANGE, CYAN = (0, 220, 0), (255, 0, 255), (0, 0, 255), (0, 165, 255), (255, 255, 0)
 BANNER = {"pass": (40, 150, 40), "repair": (30, 30, 200), "recapture": (0, 140, 230)}
-# ponytail: the area under test is the dot patch beside the sheet: the found dots' outer edges
+# the area under test is the dot patch beside the sheet: the found dots' outer edges
 # plus this margin. Bare glass past the outer dots is not part of a patch, and a missing corner
 # dot shrinks it. A pane outline drawn on the phone replaces it once the UI has one.
 MARGIN_MM = 3
@@ -29,7 +29,7 @@ def patch_canvas(capture: Rectified, dot_mm: float) -> tuple[float, float, float
     # Dots within three rule lengths of each other join one group, so a grid too sparse for the
     # rule is still measured as one area and fails. A stray blob farther out than that must not
     # stretch the area under test over bare glass.
-    # ponytail: a fixed reach; a pattern with gaps over 150 mm splits and checks only its largest
+    # a fixed reach; a pattern with gaps over 150 mm splits and checks only its largest
     # part. Ask the user to mark the pane outline if that case shows up in the field.
     reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (round(3 * RULE_MM / scale) | 1,) * 2)
     count, groups = cv2.connectedComponents(cv2.dilate(mask, reach))

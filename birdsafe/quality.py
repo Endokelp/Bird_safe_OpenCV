@@ -8,7 +8,7 @@ import numpy as np
 from birdsafe.markers import DOT_MM
 
 SATURATION = 250
-# ponytail: floors measured on synthetic texture_std=8 (sharp Laplacian energy ~3800,
+# floors measured on synthetic texture_std=8 (sharp Laplacian energy ~3800,
 # blurred ~4, glare interior std 0). Retune on development captures. Held-out stays sealed.
 TEXTURE_STD = 8.0
 BLUR_ENERGY_FLOOR = 200.0

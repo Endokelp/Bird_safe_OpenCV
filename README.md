@@ -189,7 +189,7 @@ Every number here was measured on the code in this repository.
 | Live phone demo, 24 Oct 2026 | REPAIR at 62.0 mm, then PASS at 40.0 mm in the same scan | [screen recording clip](docs/media/live-demo.mp4) |
 | Earlier phone scan over 5G | REPAIR 60.5 mm, then RETAKE (dark photo, 68% unreadable), then PASS 28.5 mm with 16 of 16 dots; the saved trace replays to the same 3 decisions | `birdsafe.policy.replay` |
 | Endpoint latency, warm | 1.4 to 2.3 s round trip for a 2400 px photo, 0.5 to 1.6 s of it on the server, 250 MB peak memory | curl runs, CloudWatch |
-| Test suite | **181 passing** | `python -m pytest` |
+| Test suite | **173 passing** | `python -m pytest` |
 
 <table>
   <tr>
@@ -248,7 +248,7 @@ cd Bird_safe_OpenCV
 python3.12 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"            # pinned: opencv-python 5.0.0.93, numpy 2.3.3
-python -m pytest -q                # 181 tests
+python -m pytest -q                # 173 tests
 python -m tools.show_scan window.jpg result.png --dot-mm 19.05
 ```
 
@@ -284,9 +284,9 @@ updates the same resources. Region: `AWS_REGION`, default `us-east-2`.
 | [`birdsafe/api.py`](birdsafe/api.py) | Lambda handler, input validation, session storage |
 | [`web/index.html`](web/index.html) | Phone page |
 | [`deploy/deploy.sh`](deploy/deploy.sh) | Packaging and deployment to AWS |
-| [`tools/`](tools) | Printable sheet generator, scan viewer, repeatability harness, style lint |
-| [`tests/`](tests) | 181 tests: synthetic panes, sweep, policy, fusion, API |
-| [`docs/`](docs) | Capture protocol, specs, phase plans, the printable sheet |
+| [`tools/`](tools) | Printable sheet generator, scan viewer, repeatability harness |
+| [`tests/`](tests) | 173 tests: synthetic panes, sweep, policy, fusion, API |
+| [`docs/`](docs) | Capture protocol, the printable sheet, README media |
 
 <br>
 

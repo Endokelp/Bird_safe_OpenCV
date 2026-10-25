@@ -1,8 +1,0 @@
----
-description: OpenCV competition workspace contract and locked product
-alwaysApply: true
----
-
-Read `AGENTS.md` and `PHASE-STATE.md` before planning or editing. Treat `AGENTS.md` as the
-canonical project rules. The locked goal is the bird-safe window treatment installation checker.
-Do not revive the previous three-idea search.

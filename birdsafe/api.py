@@ -49,7 +49,7 @@ class BadRequest(ValueError):
 def _store():
     bucket = os.environ.get("SESSION_BUCKET")
     if bucket:
-        import boto3  # ponytail: in the Lambda runtime only; local runs use a folder.
+        import boto3  # in the Lambda runtime only; local runs use a folder.
 
         s3 = boto3.client("s3")
 

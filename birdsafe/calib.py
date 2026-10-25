@@ -13,7 +13,7 @@ from tools.charuco_sheet import SQUARES_X, birdsafe_board
 
 MIN_CORNERS = 6
 CORNERS_PER_ROW = SQUARES_X - 1
-# ponytail: 8000 px is 4 m at 0.5 mm/px; a bigger footprint means a view too oblique to
+# 8000 px is 4 m at 0.5 mm/px; a bigger footprint means a view too oblique to
 # measure.
 MAX_SIDE_PX = 8000
 

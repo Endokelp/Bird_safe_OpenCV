@@ -31,7 +31,7 @@ def main(paths: list[str]) -> int:
         rms.append(rectified.reproj_rms_mm)
         markers = detect_markers(rectified.image, rectified.mm_per_px)
         quality = unknown_regions(rectified.image, rectified.mm_per_px)
-        # ponytail: no pane quadrilateral until Phase 6. Repeatability measures the
+        # no pane quadrilateral until Phase 6. Repeatability measures the
         # full rectified frame, which is enough to compare captures of one taped sheet.
         pane = np.ones(markers.mask.shape, bool)
         coverage = check_coverage(
