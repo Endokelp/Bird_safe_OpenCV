@@ -83,7 +83,7 @@ gap with a ruler.
 <br>
 <sub>39 second clip from the live phone demo: REPAIR, the dot put back, then PASS in the same scan
 (<a href="docs/media/live-demo.mp4">MP4, 2.6 MB</a>).</sub>
-<!-- FULL_VIDEO_LINK: replace this comment with the full 3:45 submission video link once it is on YouTube. -->
+<br><sub><a href="https://youtu.be/SwrqCye9l0o">Full 3:45 submission video on YouTube</a></sub>
 </div>
 
 <br>
