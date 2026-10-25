@@ -26,9 +26,12 @@ def patch_canvas(capture: Rectified, dot_mm: float) -> tuple[float, float, float
     x0, y0, x1, y1 = sheet_footprint_mm()
     mask[max(0, round((y0 + oy) / scale)):max(0, round((y1 + oy) / scale)),
          max(0, round((x0 + ox) / scale)):max(0, round((x1 + ox) / scale))] = 0
-    # Dots within a rule length of each other join one group; a stray reflection blob far from the
-    # pattern must not stretch the area under test over bare glass.
-    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (round(RULE_MM / scale) | 1,) * 2)
+    # Dots within three rule lengths of each other join one group, so a grid too sparse for the
+    # rule is still measured as one area and fails. A stray blob farther out than that must not
+    # stretch the area under test over bare glass.
+    # ponytail: a fixed reach; a pattern with gaps over 150 mm splits and checks only its largest
+    # part. Ask the user to mark the pane outline if that case shows up in the field.
+    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (round(3 * RULE_MM / scale) | 1,) * 2)
     count, groups = cv2.connectedComponents(cv2.dilate(mask, reach))
     if count < 2:
         return None

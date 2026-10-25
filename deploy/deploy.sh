@@ -6,6 +6,8 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1  # Git Bash: do not rewrite /-prefixed arguments for aws.exe
 
 REGION=${AWS_REGION:-us-east-2}
+# OpenCV refuses to decode images over this many pixels (a 48 MP phone photo fits).
+MAX_PIXELS=60000000
 FUNCTION=birdsafe-scan
 ROLE=birdsafe-scan-lambda
 PY=${PYTHON:-.venv/Scripts/python}
@@ -57,11 +59,13 @@ if aws_ lambda get-function --function-name "$FUNCTION" >/dev/null 2>&1; then
   aws_ lambda update-function-code --function-name "$FUNCTION" \
     --s3-bucket "$BUCKET" --s3-key deploy/lambda.zip --architectures arm64 >/dev/null
   aws_ lambda wait function-updated-v2 --function-name "$FUNCTION"
+  aws_ lambda update-function-configuration --function-name "$FUNCTION"     --environment "Variables={SESSION_BUCKET=$BUCKET,OPENCV_IO_MAX_IMAGE_PIXELS=$MAX_PIXELS}" >/dev/null
+  aws_ lambda wait function-updated-v2 --function-name "$FUNCTION"
 else
   aws_ lambda create-function --function-name "$FUNCTION" --runtime python3.12 \
     --architectures arm64 --handler birdsafe.api.handler --memory-size 2048 --timeout 30 \
     --role "arn:aws:iam::$ACCOUNT:role/$ROLE" --code "S3Bucket=$BUCKET,S3Key=deploy/lambda.zip" \
-    --environment "Variables={SESSION_BUCKET=$BUCKET}" >/dev/null
+    --environment "Variables={SESSION_BUCKET=$BUCKET,OPENCV_IO_MAX_IMAGE_PIXELS=$MAX_PIXELS}" >/dev/null
   aws_ lambda wait function-active-v2 --function-name "$FUNCTION"
 fi
 

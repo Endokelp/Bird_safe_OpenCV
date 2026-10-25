@@ -174,10 +174,13 @@ def _fixed_targets(
     last_repair = next((r for r in reversed(history) if r.decision.action == "repair"), None)
     if last_repair is None:
         return ()
+    # A spot counts as fixed only if it now reads clear: no confirmed gap and no possible gap
+    # (glare or blur over it) nearby.
+    blockers = [(cx, cy) for cx, cy, _ in metrics.repair_targets] + list(metrics.possible_centroids_mm)
     return tuple(
         (x, y)
         for x, y, _ in last_repair.decision.targets_mm
-        if not any(math.hypot(x - cx, y - cy) <= FIX_MATCH_MM for cx, cy, _ in metrics.repair_targets)
+        if not any(math.hypot(x - cx, y - cy) <= FIX_MATCH_MM for cx, cy in blockers)
     )
 
 

@@ -27,6 +27,9 @@ from birdsafe.scan import ScanState, scan_step
 
 # Lambda function URLs cap a request at 6 MB; the page sends a 2400 px JPEG of 1 to 2 MB.
 MAX_IMAGE_B64 = 5_500_000
+# Each request reloads and fuses the whole session again, so a public URL needs a ceiling. The
+# policy stops after 3 stalled retakes; 8 leaves room for repairs and rescans.
+MAX_SESSION_PHOTOS = 8
 DOT_MM_RANGE = (3.0, 60.0)
 PAGE = Path(__file__).resolve().parent.parent / "web" / "index.html"
 NO_DOTS_MESSAGE = (
@@ -127,9 +130,12 @@ def _parse(body: dict) -> tuple[np.ndarray, float, str | None]:
     if len(encoded) > MAX_IMAGE_B64:
         raise BadRequest("The photo is too large. Send one under 4 MB.")
     try:
-        image = cv2.imdecode(np.frombuffer(base64.b64decode(encoded), np.uint8), cv2.IMREAD_COLOR)
-    except ValueError as err:
-        raise BadRequest("The photo could not be read.") from err
+        raw = base64.b64decode(encoded, validate=True)
+        # cv2.error also covers OPENCV_IO_MAX_IMAGE_PIXELS (set in deploy.sh), which stops a small
+        # compressed file from decoding into gigabytes.
+        image = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR) if raw else None
+    except (ValueError, cv2.error) as err:
+        raise BadRequest("The photo could not be read. Send a JPEG or PNG.") from err
     if image is None:
         raise BadRequest("The photo could not be read. Send a JPEG or PNG.")
 
@@ -158,6 +164,10 @@ def scan(body: dict) -> dict:
     started = time.perf_counter()
     image, dot_mm, session = _parse(body)
     state = _load(session) if session else None
+    if state is not None and abs(state.dot_mm - dot_mm) > 1e-6:
+        raise BadRequest("The dot size changed during this scan. Start a new scan to use a different size.")
+    if state is not None and len(state.trace) >= MAX_SESSION_PHOTOS:
+        raise BadRequest(f"This scan already has {len(state.trace)} photos. Start a new scan.")
     capture = rectify(image)
 
     if state is None:

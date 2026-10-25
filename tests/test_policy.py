@@ -210,6 +210,16 @@ def test_fixed_mm_lists_every_prior_target_once_the_pane_passes():
     assert (d.action, d.fixed_mm) == ("pass", ((130.0, 130.0), (230.0, 230.0)))
 
 
+def test_a_prior_target_now_hidden_as_a_possible_gap_is_not_called_fixed():
+    # Glare over the old spot leaves a possible gap there; the other gap still needs repair.
+    prior = _trace(_metrics(repair_targets=(TARGET, OTHER_TARGET)))
+    hidden = _metrics(repair_targets=(OTHER_TARGET,), possible_centroids_mm=((TARGET[0] + 4.0, TARGET[1]),))
+    d = decide(hidden, prior)
+    assert d.action == "repair"
+    assert d.fixed_mm == ()
+    assert "repaired spot" not in d.message
+
+
 def test_a_current_target_decides_fixed_at_the_match_distance():
     prior = _trace(_metrics(repair_targets=(TARGET,)))
     inside = (TARGET[0] + RULE_MM - 1.0, TARGET[1], 800.0)
